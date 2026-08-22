@@ -71,6 +71,7 @@ jobs:
         run: |
           set -e
           ! grep -R "com.android.vending.BILLING" platforms/android/app/src/main/AndroidManifest.xml
+          ! grep -R "com.google.android.gms\|com.google.firebase\|com.google.android.datatransport" platforms/android/app/src/main/AndroidManifest.xml
           ! grep -R "TerminalService\|AlpineDocumentProvider" platforms/android/app/src/main/AndroidManifest.xml
           ! find platforms/android/app/src/main -type f | grep -E "alpine\.rootfs|libproot|libaxs"
 
