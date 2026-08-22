@@ -1,0 +1,10 @@
+export const FrontmatterOpen = 1,
+  FrontmatterContent = 2,
+  FrontmatterClose = 3,
+  ExpressionOpen = 4,
+  ExpressionContent = 5,
+  ExpressionClose = 6,
+  HtmlContent = 7,
+  Document = 8,
+  Frontmatter = 9,
+  AstroExpression = 10;

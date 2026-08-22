@@ -1,0 +1,98 @@
+name: Build LuckyBox Android
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "www/**"
+      - "res/**"
+      - "hooks/**"
+      - "utils/**"
+      - "config.xml"
+      - "package.json"
+      - "package-lock.json"
+      - "build-extras.gradle"
+      - ".github/workflows/build-android.yml"
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22.18.0"
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Install JavaScript dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run quality gate
+        run: npm run quality
+
+      - name: Prepare Cordova Android project
+        run: |
+          echo false > "${TMPDIR:-/tmp}/fdroid.bool"
+          rm -rf platforms plugins
+          npx cordova platform add android@15.1.0
+
+      - name: Verify removed native components
+        run: |
+          set -e
+          ! grep -R "com.android.vending.BILLING" platforms/android/app/src/main/AndroidManifest.xml
+          ! grep -R "TerminalService\|AlpineDocumentProvider" platforms/android/app/src/main/AndroidManifest.xml
+          ! find platforms/android/app/src/main -type f | grep -E "alpine\.rootfs|libproot|libaxs"
+
+      - name: Build installable debug APK
+        env:
+          GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx3g -Dorg.gradle.workers.max=2
+        run: |
+          echo false > "${TMPDIR:-/tmp}/fdroid.bool"
+          npx cordova build android --debug -- --packageType=apk
+
+      - name: Collect APK and checksums
+        run: |
+          mkdir -p artifacts
+          APK="$(find platforms/android/app/build/outputs/apk/debug -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          cp "$APK" artifacts/LuckyBox-debug.apk
+          sha256sum artifacts/LuckyBox-debug.apk | tee artifacts/SHA256SUMS.txt
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: LuckyBox-Android-${{ github.sha }}
+          path: artifacts/*
+          if-no-files-found: error
+          retention-days: 30

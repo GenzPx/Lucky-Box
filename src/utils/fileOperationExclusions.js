@@ -1,0 +1,28 @@
+import picomatch from "picomatch/posix";
+import Url from "utils/Url";
+export function isExcludedFileOperationPath(url, patterns = []) {
+	if (!url || !Array.isArray(patterns) || !patterns.length) return false;
+	const parsedUrl = Url.parse(url).url;
+	const pathname = Url.pathname(parsedUrl) || parsedUrl;
+	const normalizedPath = pathname.replace(/\\/g, "/").replace(/\/+$/, "");
+	const relativePath = normalizedPath.replace(/^\/+/, "");
+	const candidates = [
+		normalizedPath,
+		`${normalizedPath}/`,
+		relativePath,
+		`${relativePath}/`,
+	];
+	return patterns.some((pattern) => {
+		if (typeof pattern !== "string" || !pattern.trim()) return false;
+		try {
+			return candidates.some((candidate) =>
+				picomatch.isMatch(candidate, pattern.trim(), {
+					matchBase: !pattern.includes("/") && !pattern.includes("\\"),
+				}),
+			);
+		} catch (error) {
+			console.warn(`Invalid file exclusion pattern: ${pattern}`, error);
+			return false;
+		}
+	});
+}

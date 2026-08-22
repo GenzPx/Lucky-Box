@@ -1,0 +1,352 @@
+import fsOperation from "fileSystem";
+import alert from "dialogs/alert";
+import confirm from "dialogs/confirm";
+import loader from "dialogs/loader";
+import JSZip from "jszip";
+import helpers from "utils/helpers";
+import Url from "utils/Url";
+import { isVersionGreater } from "utils/version";
+import config from "./config";
+import InstallState from "./installState";
+import { loadPluginWithTimeout } from "./loadPlugins";
+
+let loaderDialog;
+let depsLoaders;
+export default async function installPlugin(
+	id,
+	name,
+	purchaseToken,
+	isDependency,
+) {
+	if (!isDependency) {
+		loaderDialog = loader.create(name || "Plugin", strings.installing, {
+			timeout: 6000,
+		});
+		depsLoaders = [];
+	}
+	let pluginDir;
+	let pluginUrl;
+	let state;
+	try {
+		if (!(await fsOperation(PLUGIN_DIR).exists())) {
+			await fsOperation(DATA_STORAGE).createDirectory("plugins");
+		}
+	} catch (error) {
+		window.log("error", error);
+	}
+	if (!/^(https?|file|content):/.test(id)) {
+		pluginUrl = Url.join(
+			config.API_BASE,
+			"plugin/download/",
+			`${id}?device=${device.uuid}`,
+		);
+		if (purchaseToken) pluginUrl += `&token=${purchaseToken}`;
+		pluginUrl += `&package=${BuildInfo.packageName}`;
+		pluginUrl += `&version=${device.version}`;
+		pluginDir = Url.join(PLUGIN_DIR, id);
+	} else {
+		pluginUrl = id;
+	}
+	try {
+		if (!isDependency) loaderDialog.show();
+		let plugin;
+		if (
+			pluginUrl.includes(config.API_BASE) ||
+			pluginUrl.startsWith("file:") ||
+			pluginUrl.startsWith("content:")
+		) {
+			plugin = await fsOperation(pluginUrl).readFile(
+				undefined,
+				(loaded, total) => {
+					loaderDialog.setMessage(
+						`${strings.loading} ${((loaded / total) * 100).toFixed(2)}%`,
+					);
+				},
+			);
+		} else {
+			plugin = await new Promise((resolve, reject) => {
+				cordova.plugin.http.sendRequest(
+					pluginUrl,
+					{
+						method: "GET",
+						responseType: "arraybuffer",
+					},
+					(response) => {
+						resolve(response.data);
+						loaderDialog.setMessage(`${strings.loading} 100%`);
+					},
+					(error) => {
+						reject(error);
+					},
+				);
+			});
+		}
+		if (plugin) {
+			const zip = new JSZip();
+			await zip.loadAsync(plugin);
+			if (!zip.files["plugin.json"]) {
+				throw new Error(strings["invalid plugin"]);
+			}
+			const pluginJson = JSON.parse(
+				await zip.files["plugin.json"].async("text"),
+			);
+			if (!zip.files[pluginJson.main]) {
+				pluginJson.main = "main.js";
+			}
+			if (!zip.files[pluginJson.icon]) {
+				pluginJson.icon = "icon.png";
+			}
+			if (!zip.files[pluginJson.readme]) {
+				pluginJson.readme = "readme.md";
+			}
+			if (!zip.files[pluginJson.main]) {
+				throw new Error(strings["invalid plugin"]);
+			}
+			if (!isDependency && pluginJson.dependencies) {
+				const manifests = await resolveDepsManifest(pluginJson.dependencies);
+				let titleText;
+				if (manifests.length > 1) {
+					titleText = "Acode wants to install the following dependencies:";
+				} else {
+					titleText = "Acode wants to install the following dependency:";
+				}
+				const shouldInstall = await confirm(
+					"Installer Notice",
+					titleText +
+						"<br /><br />" +
+						manifests.map((value) => value.name).join(", "),
+					true,
+				);
+				if (shouldInstall) {
+					for (const manifest of manifests) {
+						const hasError = await resolveDep(manifest);
+						if (hasError) throw new Error(strings.failed);
+					}
+				} else {
+					return;
+				}
+			}
+			if (!pluginDir) {
+				pluginJson.source = pluginUrl;
+				id = pluginJson.id;
+				pluginDir = Url.join(PLUGIN_DIR, id);
+			}
+			state = await InstallState.new(id);
+			if (!(await fsOperation(pluginDir).exists())) {
+				await fsOperation(PLUGIN_DIR).createDirectory(id);
+			}
+			const ignoredUnsafeEntries = new Set();
+			const files = Object.keys(zip.files);
+			const limit = 2;
+			async function processFile(file) {
+				try {
+					const entry = zip.files[file];
+					let correctFile = file.replace(/\\/g, "/");
+					const isDirEntry = entry.dir || correctFile.endsWith("/");
+					if (isUnsafeAbsolutePath(file)) {
+						ignoredUnsafeEntries.add(file);
+						return;
+					}
+					correctFile = sanitizeZipPath(correctFile, isDirEntry);
+					if (!correctFile) return;
+					const fileUrl = Url.join(pluginDir, correctFile);
+					if (isDirEntry) {
+						await createFileRecursive(pluginDir, correctFile, true);
+						return;
+					}
+					const lastSlash = correctFile.lastIndexOf("/");
+					if (lastSlash !== -1) {
+						const parentRel = correctFile.slice(0, lastSlash + 1);
+						await createFileRecursive(pluginDir, parentRel, true);
+					}
+					if (!state.exists(correctFile)) {
+						await createFileRecursive(pluginDir, correctFile, false);
+					}
+					let data = await entry.async("ArrayBuffer");
+					if (file === "plugin.json") {
+						data = JSON.stringify(pluginJson);
+					}
+					if (!(await state.isUpdated(correctFile, data))) return;
+					await fsOperation(fileUrl).writeFile(data);
+				} catch (error) {
+					console.error(`Error processing file ${file}:`, error);
+				}
+			}
+			for (let i = 0; i < files.length; i += limit) {
+				const batch = files.slice(i, i + limit);
+				await Promise.allSettled(batch.map(processFile));
+				await new Promise((r) => setTimeout(r, 0));
+			}
+			if (!isDependency && ignoredUnsafeEntries.size) {
+				const sample = Array.from(ignoredUnsafeEntries).slice(0, 3).join(", ");
+				loaderDialog.setMessage(
+					`Skipped ${ignoredUnsafeEntries.size} unsafe archive entr${ignoredUnsafeEntries.size === 1 ? "y" : "ies"} (e.g., ${sample})`,
+				);
+				console.warn(
+					"Plugin installer: skipped unsafe absolute paths in archive:",
+					Array.from(ignoredUnsafeEntries),
+				);
+			}
+			if (isDependency) {
+				depsLoaders.push(async () => {
+					await loadPluginWithTimeout(id, true);
+				});
+			} else {
+				for (const loader of depsLoaders) {
+					await loader();
+				}
+				await loadPluginWithTimeout(id, true);
+			}
+			await state.save();
+			deleteRedundantFiles(pluginDir, state);
+		}
+	} catch (err) {
+		try {
+			if (state) await state.clear();
+			if (pluginDir && (await fsOperation(pluginDir).exists())) {
+				await fsOperation(pluginDir).delete();
+			}
+		} catch (cleanupError) {
+			console.error("Cleanup failed:", cleanupError);
+		}
+		throw err;
+	} finally {
+		if (!isDependency) {
+			loaderDialog.destroy();
+		}
+	}
+}
+async function createFileRecursive(parent, dir, shouldBeDirAtEnd) {
+	let wantDirEnd = !!shouldBeDirAtEnd;
+	let parts;
+	if (typeof dir === "string") {
+		if (dir.endsWith("/")) wantDirEnd = true;
+		dir = dir.replace(/\\/g, "/");
+		parts = dir.split("/");
+	} else {
+		parts = dir;
+	}
+	parts = parts.filter((d) => d);
+	const cd = parts.shift();
+	if (!cd) return;
+	const newParent = Url.join(parent, cd);
+	const isLast = parts.length === 0;
+	const needDir = !isLast || wantDirEnd;
+	if (!(await fsOperation(newParent).exists())) {
+		if (needDir) {
+			try {
+				await fsOperation(parent).createDirectory(cd);
+			} catch (e) {
+				if (!(await fsOperation(newParent).exists())) throw e;
+			}
+		} else {
+			try {
+				await fsOperation(parent).createFile(cd);
+			} catch (e) {
+				if (!(await fsOperation(newParent).exists())) throw e;
+			}
+		}
+	}
+	if (parts.length) {
+		await createFileRecursive(newParent, parts, wantDirEnd);
+	}
+}
+function sanitizeZipPath(p, isDir) {
+	if (!p) return "";
+	let path = String(p);
+	path = path.replace(/\\/g, "/");
+	path = path.replace(/^[a-zA-Z]+:\/\//, "");
+	path = path.replace(/^\/+/, "");
+	path = path.replace(/^[A-Za-z]:\//, "");
+	const parts = path.split("/");
+	const stack = [];
+	for (const part of parts) {
+		if (!part || part === ".") continue;
+		if (part === "..") {
+			if (stack.length) stack.pop();
+			continue;
+		}
+		stack.push(part);
+	}
+	let safe = stack.join("/");
+	if (isDir && safe && !safe.endsWith("/")) safe += "/";
+	return safe;
+}
+function isUnsafeAbsolutePath(p) {
+	if (!p) return false;
+	const s = String(p);
+	if (/^[A-Za-z]:[\\\/]/.test(s)) return true;
+	if (s.startsWith("//")) return true;
+	if (s.startsWith("/")) {
+		return (
+			s.startsWith("/data") ||
+			s.startsWith("/system") ||
+			s.startsWith("/vendor") ||
+			s.startsWith("/storage") ||
+			s.startsWith("/sdcard") ||
+			s.startsWith("/root") ||
+			true
+		);
+	}
+	return false;
+}
+async function resolveDepsManifest(deps) {
+	const resolved = [];
+	for (const dependency of deps) {
+		const remoteDependency = await fsOperation(
+			config.API_BASE,
+			`plugin/${dependency}`,
+		)
+			.readFile("json")
+			.catch(() => null);
+		if (!remoteDependency)
+			throw new Error(`Unknown plugin dependency: ${dependency}`);
+		const version = await getInstalledPluginVersion(remoteDependency.id);
+		if (version && !isVersionGreater(remoteDependency?.version, version))
+			continue;
+		if (remoteDependency.dependencies) {
+			const manifests = await resolveDepsManifest(
+				remoteDependency.dependencies,
+			);
+			resolved.push(manifests);
+		}
+		resolved.push(remoteDependency);
+	}
+	async function getInstalledPluginVersion(id) {
+		if (await fsOperation(PLUGIN_DIR, id).exists()) {
+			const plugin = await fsOperation(PLUGIN_DIR, id, "plugin.json").readFile(
+				"json",
+			);
+			return plugin.version;
+		}
+	}
+	return resolved;
+}
+async function resolveDep(manifest) {
+	if (Number(manifest.price) > 0) {
+		throw new Error("Paid plugin dependencies are not supported by LuckyBox.");
+	}
+	loaderDialog.setMessage(
+		`${strings.installing.replace("...", "")} ${manifest.name}...`,
+	);
+	await installPlugin(manifest.id, undefined, undefined, true);
+}
+async function listFileRecursive(dir, files) {
+	for (const child of await fsOperation(dir).lsDir()) {
+		const fileUrl = Url.join(dir, child.name);
+		if (child.isDirectory) {
+			await listFileRecursive(fileUrl, files);
+		} else {
+			files.push(fileUrl);
+		}
+	}
+}
+async function deleteRedundantFiles(pluginDir, state) {
+	let files = [];
+	await listFileRecursive(pluginDir, files);
+	for (const file of files) {
+		if (!state.exists(file.replace(`${pluginDir}/`, ""))) {
+			fsOperation(file).delete();
+		}
+	}
+}
