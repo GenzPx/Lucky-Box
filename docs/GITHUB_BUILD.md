@@ -1,42 +1,51 @@
-# Building LuckyBox with GitHub Actions
+# Building LuckyBox releases with GitHub Actions
 
 Workflow: `.github/workflows/build-android.yml`
 
-## Automatic builds
+## Output policy
 
-The workflow runs when:
+The workflow builds only signed release APKs. It does not build or upload debug APKs.
 
-- manually started from **Actions → Build LuckyBox Android → Run workflow**;
-- code is pushed to `main` in relevant project paths;
-- a pull request targets `main`.
+Each successful run uploads:
 
-## Output
-
-The workflow builds an installable debug-signed APK and uploads:
-
-- `LuckyBox-debug.apk`
+- `LuckyBox-release-<commit>.apk` for branch/manual builds, or `LuckyBox-<tag>.apk` for tags
 - `SHA256SUMS.txt`
 
-Open the completed workflow run and download the `LuckyBox-Android-<commit>` artifact.
+A pushed `v*` tag also publishes the APK and checksum on the repository's GitHub Releases page.
 
 ## Toolchain
 
 - Ubuntu GitHub-hosted runner
 - Node.js 22.18
 - Temurin JDK 17
-- Android SDK 36 / Build Tools 36.0.0
+- Android SDK 36
+- Android Build Tools 36.0.0
 - Cordova Android 15.1.0
 
-## Safety checks
+## Quality and security gates
 
-Before compiling, the workflow fails if the generated Android project contains:
+The workflow requires:
 
-- Google Play Billing permission;
-- TerminalService;
-- AlpineDocumentProvider;
-- Alpine rootfs;
-- proot/AXS native libraries.
+- source comment policy pass
+- Biome pass
+- TypeScript pass
+- all tests pass
+- production dependency audit pass
+- production web bundle pass
+- no Billing permission
+- no Google Play Services, Firebase, or DataTransport manifest components
+- no TerminalService or AlpineDocumentProvider
+- no Alpine, proot, or AXS payload
+- valid APK signature
+- no debug APK in build output
 
-## Release signing
+## Signing secrets
 
-The current workflow intentionally emits a debug-signed personal APK so no signing secret is required. A stable release channel should use one persistent private keystore stored as encrypted GitHub Actions secrets. Do not commit a release keystore or passwords to the repository.
+The repository uses these encrypted GitHub Actions Secrets:
+
+- `LUCKYBOX_KEYSTORE_BASE64`
+- `LUCKYBOX_KEYSTORE_PASSWORD`
+- `LUCKYBOX_KEY_ALIAS`
+- `LUCKYBOX_KEY_PASSWORD`
+
+The permanent signing key must be backed up securely. Losing it prevents future APKs from updating existing LuckyBox installations.

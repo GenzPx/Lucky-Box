@@ -1,9 +1,10 @@
-name: Build LuckyBox Android
+name: Build LuckyBox Release
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
+    tags: ["v*"]
     paths:
       - "src/**"
       - "www/**"
@@ -19,10 +20,10 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
-  group: android-${{ github.ref }}
+  group: android-release-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -75,25 +76,71 @@ jobs:
           ! grep -R "TerminalService\|AlpineDocumentProvider" platforms/android/app/src/main/AndroidManifest.xml
           ! find platforms/android/app/src/main -type f | grep -E "alpine\.rootfs|libproot|libaxs"
 
-      - name: Build installable debug APK
+      - name: Restore release signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.LUCKYBOX_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.LUCKYBOX_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.LUCKYBOX_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.LUCKYBOX_KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_BASE64"
+          test -n "$STORE_PASSWORD"
+          test -n "$KEY_ALIAS"
+          test -n "$KEY_PASSWORD"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/luckybox-release.jks"
+          python - <<'PY'
+          import json, os
+          config = {
+              "android": {
+                  "release": {
+                      "keystore": os.path.join(os.environ["RUNNER_TEMP"], "luckybox-release.jks"),
+                      "storePassword": os.environ["STORE_PASSWORD"],
+                      "alias": os.environ["KEY_ALIAS"],
+                      "password": os.environ["KEY_PASSWORD"],
+                      "keystoreType": "jks",
+                      "packageType": "apk"
+                  }
+              }
+          }
+          with open(os.path.join(os.environ["RUNNER_TEMP"], "build.json"), "w", encoding="utf-8") as file:
+              json.dump(config, file)
+          PY
+
+      - name: Build signed release APK
         env:
           GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx3g -Dorg.gradle.workers.max=2
         run: |
           echo false > "${TMPDIR:-/tmp}/fdroid.bool"
-          npx cordova build android --debug -- --packageType=apk
+          npx cordova build android --release --buildConfig="$RUNNER_TEMP/build.json" -- --packageType=apk
 
-      - name: Collect APK and checksums
+      - name: Verify and collect release APK
         run: |
+          set -e
           mkdir -p artifacts
-          APK="$(find platforms/android/app/build/outputs/apk/debug -name '*.apk' | head -n 1)"
+          APK="$(find platforms/android/app/build/outputs/apk/release -name '*.apk' | head -n 1)"
           test -n "$APK"
-          cp "$APK" artifacts/LuckyBox-debug.apk
-          sha256sum artifacts/LuckyBox-debug.apk | tee artifacts/SHA256SUMS.txt
+          ! find platforms/android/app/build/outputs/apk -path '*debug*' -name '*.apk' | grep .
+          apksigner verify --verbose --print-certs "$APK"
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            FILE_NAME="LuckyBox-${GITHUB_REF_NAME}.apk"
+          else
+            FILE_NAME="LuckyBox-release-${GITHUB_SHA::7}.apk"
+          fi
+          cp "$APK" "artifacts/$FILE_NAME"
+          sha256sum "artifacts/$FILE_NAME" | tee artifacts/SHA256SUMS.txt
 
-      - name: Upload APK
+      - name: Upload release artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LuckyBox-Android-${{ github.sha }}
+          name: LuckyBox-Release-${{ github.sha }}
           path: artifacts/*
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true
