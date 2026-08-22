@@ -120,7 +120,7 @@ jobs:
           APK="$(find platforms/android/app/build/outputs/apk/release -name '*.apk' | head -n 1)"
           test -n "$APK"
           ! find platforms/android/app/build/outputs/apk -path '*debug*' -name '*.apk' | grep .
-          apksigner verify --verbose --print-certs "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK"
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             FILE_NAME="LuckyBox-${GITHUB_REF_NAME}.apk"
           else
