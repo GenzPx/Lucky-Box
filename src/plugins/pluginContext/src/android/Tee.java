@@ -18,7 +18,7 @@ import android.content.Context;
 import org.apache.cordova.*;
 
 
-import com.foxdebug.acode.rk.auth.EncryptedPreferenceManager;
+import id.luckybox.security.EncryptedPreferenceManager;
 
 public class Tee extends CordovaPlugin {
 
