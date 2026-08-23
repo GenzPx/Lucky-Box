@@ -1,0 +1,101 @@
+.activity-sidebar {
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+  }
+
+  .activity-summary {
+    padding: 0 14px 12px;
+    color: var(--secondary-text-color);
+    font-size: 0.78rem;
+  }
+
+  .activity-list {
+    display: grid;
+    gap: 10px;
+    padding: 0 10px 18px;
+  }
+
+  .activity-list[data-empty]::after {
+    content: "Operation progress, downloads, archives, and Git jobs will appear here.";
+    display: block;
+    padding: 28px 18px;
+    color: var(--secondary-text-color);
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  .activity-task {
+    padding: 11px;
+    border: 1px solid rgb(127 127 127 / 18%);
+    border-radius: 12px;
+    background: rgb(127 127 127 / 7%);
+  }
+
+  .activity-task-head {
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    gap: 8px;
+    align-items: center;
+
+    div {
+      min-width: 0;
+    }
+
+    strong,
+    small {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    small,
+    .activity-state {
+      color: var(--secondary-text-color);
+      font-size: 0.7rem;
+    }
+  }
+
+  .activity-progress {
+    height: 4px;
+    margin: 10px 0 8px;
+    overflow: hidden;
+    border-radius: 99px;
+    background: rgb(127 127 127 / 18%);
+
+    span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: #f57c00;
+      transition: width 180ms ease;
+    }
+  }
+
+  .activity-task-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--secondary-text-color);
+    font-size: 0.7rem;
+
+    button {
+      border: 0;
+      background: transparent;
+      color: var(--primary-text-color);
+      font: inherit;
+    }
+  }
+
+  .state-failed .activity-progress span,
+  .state-cancelled .activity-progress span {
+    background: #d95757;
+  }
+
+  .state-completed .activity-progress span {
+    background: #2ca866;
+  }
+}

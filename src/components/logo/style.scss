@@ -8,30 +8,20 @@
   &::after {
     content: "";
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background-image: url(./logo.png);
-    background-size: 80px;
+    background-size: 96px;
     background-repeat: no-repeat;
     background-position: center;
+    border-radius: 34px;
+    filter: drop-shadow(0 10px 16px rgb(123 49 0 / 28%));
   }
 
   &::before {
     content: "";
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(
-      circle,
-      rgb(68, 153, 254, 0.5),
-      rgb(68, 153, 254, 0.1),
-      rgb(68, 153, 254, 0),
-      rgb(68, 153, 254, 0)
-    );
-    overflow: visible;
+    inset: 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgb(245 124 0 / 34%), rgb(245 124 0 / 8%) 54%, transparent 72%);
   }
 }

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lucky Clover Welcome</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: #173322; color: #eaf4e8; font: 14px system-ui, sans-serif; }
+    main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; max-width: 980px; margin: auto; padding: 36px 24px; background: radial-gradient(circle at 8% 5%, rgb(255 196 0 / 15%), transparent 30%); }
+    header { grid-column: 1/-1; display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 30px; padding: 32px; border: 1px solid rgb(255 196 0 / 36%); border-radius: 22px; background: #10251a; box-shadow: 0 18px 50px rgb(3 15 9 / 48%); }
+    .logo { width: 126px; height: 126px; overflow: hidden; border-radius: 30px; background: #ffc400; transform: rotate(-2deg); box-shadow: 0 12px 28px rgb(3 15 9 / 32%); }
+    .logo img { width: 100%; height: 100%; object-fit: cover; }
+    .eyebrow { color: #ffc400; font-size: 10px; font-weight: 800; letter-spacing: .16em; }
+    h1 { margin: 5px 0 8px; color: #fff7d1; font-size: clamp(28px, 5vw, 42px); line-height: 1.04; letter-spacing: -.04em; }
+    .tagline { max-width: 620px; color: rgb(255 247 209 / 72%); line-height: 1.55; }
+    .pills { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 15px; }
+    .pills span { padding: 5px 9px; border: 1px solid rgb(255 196 0 / 24%); border-radius: 999px; background: rgb(255 255 255 / 5%); font-size: 10px; }
+    section { padding: 16px; border: 1px solid rgb(255 196 0 / 18%); border-radius: 16px; background: rgb(16 37 26 / 58%); }
+    h2 { margin: 0 0 10px 4px; color: #ffc400; font-size: 10px; letter-spacing: .14em; }
+    .row { display: grid; grid-template-columns: 32px 1fr auto; gap: 10px; align-items: center; min-height: 48px; padding: 5px 9px; border-radius: 11px; }
+    .row:hover { background: rgb(255 196 0 / 8%); }
+    .icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: rgb(88 214 141 / 13%); color: #58d68d; }
+    kbd { padding: 3px 6px; border: 1px solid rgb(255 196 0 / 18%); border-radius: 6px; color: rgb(234 244 232 / 55%); font-size: 10px; }
+    .connect { grid-column: 1/-1; }
+    .links { display: flex; flex-wrap: wrap; gap: 8px; }
+    .links span { padding: 9px 12px; border: 1px solid rgb(255 196 0 / 20%); border-radius: 10px; background: rgb(255 196 0 / 6%); font-size: 11px; }
+    @media (max-width: 620px) { main { grid-template-columns: 1fr; padding: 16px; } header { grid-column: 1; grid-template-columns: 1fr; justify-items: center; text-align: center; } .logo { width: 96px; height: 96px; } .connect { grid-column: 1; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="logo"><img src="luckybox-clover.png" alt="LuckyBox"></div>
+      <div><div class="eyebrow">MOBILE DEV WORKSPACE</div><h1>Build something lucky.</h1><div class="tagline">Code, inspect, archive, and commit from one focused Android workspace.</div><div class="pills"><span>Offline-first</span><span>Web DevTools</span><span>Git ready</span></div></div>
+    </header>
+    <section><h2>GET STARTED</h2><div class="row"><span class="icon">＋</span><span>New file</span><kbd>Ctrl+N</kbd></div><div class="row"><span class="icon">▣</span><span>Open file</span><kbd>Ctrl+O</kbd></div><div class="row"><span class="icon">▰</span><span>Open folder</span></div></section>
+    <section><h2>CONFIGURE</h2><div class="row"><span class="icon">⚙</span><span>Settings</span></div><div class="row"><span class="icon">◉</span><span>Lucky Clover theme</span></div><div class="row"><span class="icon">⌘</span><span>Built-in plugins</span></div></section>
+    <section class="connect"><h2>CONNECT</h2><div class="links"><span>Website</span><span>GitHub</span><span>Telegram</span><span>YouTube</span><span>Facebook</span><span>WhatsApp</span></div></section>
+  </main>
+</body>
+</html>

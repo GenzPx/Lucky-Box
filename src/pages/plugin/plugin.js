@@ -6,7 +6,6 @@ import loader from "dialogs/loader";
 import { addIntentHandler, removeIntentHandler } from "handlers/intent";
 import purchaseListener from "handlers/purchase";
 import actionStack from "lib/actionStack";
-import auth, { loginEvents } from "lib/auth";
 import config from "lib/config";
 import customTab from "lib/customTab";
 import installPlugin from "lib/installPlugin";

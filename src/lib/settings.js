@@ -1,12 +1,10 @@
 import fsOperation from "fileSystem";
 import ThemeBuilder from "theme/builder";
 import themes from "theme/list";
-import { getSystemEditorTheme } from "theme/preInstalled";
 import helpers from "utils/helpers";
 import Url from "utils/Url";
 import config from "./config";
 import lang from "./lang";
-import { isDeviceDarkTheme } from "./systemConfiguration";
 
 class Settings {
 	#customTheme = new ThemeBuilder("Custom").toJSON();
@@ -96,7 +94,7 @@ class Settings {
 	constructor() {
 		this.#defaultSettings = {
 			animation: "system",
-			appTheme: "dark",
+			appTheme: "lucky clover",
 			autosave: 0,
 			fileBrowser: this.#fileBrowserSettings,
 			formatter: {},
@@ -153,7 +151,6 @@ class Settings {
 			lineHeight: 2,
 			leftMargin: 50,
 			checkFiles: true,
-			checkForAppUpdates: false,
 			desktopMode: false,
 			console: this.CONSOLE_LEGACY,
 			keyboardMode: this.KEYBOARD_MODE_NO_SUGGESTIONS_AGGRESSIVE,
@@ -204,10 +201,8 @@ class Settings {
 	async init() {
 		if (this.#initialized) return;
 		this.settingsFile = Url.join(DATA_STORAGE, "settings.json");
-		this.#defaultSettings.appTheme = "system";
-		this.#defaultSettings.editorTheme = getSystemEditorTheme(
-			isDeviceDarkTheme(),
-		);
+		this.#defaultSettings.appTheme = "lucky clover";
+		this.#defaultSettings.editorTheme = "githubDark";
 		this.#initialized = true;
 		const fs = fsOperation(this.settingsFile);
 		if (!(await fs.exists())) {

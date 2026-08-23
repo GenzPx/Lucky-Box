@@ -14,7 +14,7 @@ export default function openWelcomeTab() {
 		render: true,
 		type: "page",
 		content: welcomeContent,
-		tabIcon: "icon acode",
+		tabIcon: "icon public",
 		hideQuickTools: true,
 	});
 	welcomeFile.setCustomTitle(() => "Get Started");
@@ -27,16 +27,31 @@ function createWelcomeContent() {
 	};
 	return (
 		<div id="welcome-tab" className="welcome-page scroll">
-			{}
 			<header className="welcome-header">
-				<img className="logo" src={logoSrc} width="48" height="48" alt="" />
+				<div className="welcome-logo-shell">
+					<img
+						className="logo"
+						src={logoSrc}
+						width="82"
+						height="82"
+						alt="LuckyBox"
+					/>
+				</div>
 				<div className="welcome-header-text">
-					<h1>Welcome to LuckyBox</h1>
-					<p className="tagline">Fast, focused code editor for Android</p>
+					<span className="welcome-eyebrow">MOBILE DEV WORKSPACE</span>
+					<h1>Build something lucky.</h1>
+					<p className="tagline">
+						Code, inspect, archive, and commit from one focused Android
+						workspace.
+					</p>
+					<div className="welcome-pills">
+						<span>Offline-first</span>
+						<span>Web DevTools</span>
+						<span>Git ready</span>
+					</div>
 				</div>
 			</header>
 
-			{}
 			<section className="welcome-section">
 				<h2 className="section-label">GET STARTED</h2>
 				<div className="action-list">
@@ -72,7 +87,6 @@ function createWelcomeContent() {
 				</div>
 			</section>
 
-			{}
 			<section className="welcome-section">
 				<h2 className="section-label">CONFIGURE</h2>
 				<div className="action-list">
@@ -94,7 +108,6 @@ function createWelcomeContent() {
 				</div>
 			</section>
 
-			{}
 			<section className="welcome-section">
 				<h2 className="section-label">LEARN</h2>
 				<div className="action-list">
@@ -111,18 +124,23 @@ function createWelcomeContent() {
 				</div>
 			</section>
 
-			{}
 			<section className="welcome-section welcome-links">
 				<h2 className="section-label">CONNECT</h2>
 				<div className="link-row">
-					<LinkItem icon="acode" label="Website" url={config.BASE_URL} />
-					<LinkItem icon="github" label="GitHub" url={config.GITHUB_URL} />
+					<LinkItem icon="public" label="Website" url={config.REPOSITORY_URL} />
+					<LinkItem icon="github" label="GitHub" url={config.PROFILE_URL} />
 					<LinkItem
 						icon="telegram"
 						label="Telegram"
 						url={config.TELEGRAM_URL}
 					/>
-					<LinkItem icon="discord" label="Discord" url={config.DISCORD_URL} />
+					<LinkItem icon="youtube" label="YouTube" url={config.YOUTUBE_URL} />
+					<LinkItem
+						icon="facebook"
+						label="Facebook"
+						url={config.FACEBOOK_URL}
+					/>
+					<LinkItem icon="link" label="WhatsApp" url={config.WHATSAPP_URL} />
 				</div>
 			</section>
 		</div>

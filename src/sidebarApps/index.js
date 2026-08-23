@@ -47,7 +47,8 @@ async function loadApps() {
 	add(...(await import("./files")).default);
 	add(...(await import("./searchInFiles")).default);
 	add(...(await import("./extensions")).default);
-	add(...(await import("./notification")).default);
+	add(...(await import("./gitCommit")).default);
+	add(...(await import("./activity")).default);
 }
 function ensureActiveApp() {
 	const activeApps = apps.filter((app) => app.active);
@@ -66,7 +67,7 @@ function ensureActiveApp() {
 }
 function get(id) {
 	const app = apps.find((app) => app.id === id);
-	return app.container;
+	return app?.container || null;
 }
 function onclick(e) {
 	const target = e.target;

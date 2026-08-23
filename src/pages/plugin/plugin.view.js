@@ -9,7 +9,6 @@ import alert from "dialogs/alert";
 import DOMPurify from "dompurify";
 import Ref from "html-tag-js/ref";
 import actionStack from "lib/actionStack";
-import auth, { loginEvents } from "lib/auth";
 import config from "lib/config";
 import helpers from "utils/helpers";
 import Url from "utils/Url";
@@ -360,26 +359,11 @@ async function Buttons(props) {
 			</button>
 		);
 	}
-	const user = await auth.getLoggedInUser();
-	if (isPaid && helpers.shouldAllowExternalPurchase() && !user) {
-		const buttonRef = Ref();
+	if (isPaid) {
 		return (
-			<button
-				ref={buttonRef}
-				data-type="info"
-				className="btn btn-install"
-				onclick={async () => {
-					try {
-						await auth.login();
-						const newButton = await Buttons(props);
-						buttonRef.el.replaceWith(newButton);
-					} catch (error) {
-						helpers.error(error);
-					}
-				}}
-			>
-				<i className="icon user-round"></i>
-				{strings.login}
+			<button data-type="info" className="btn btn-install" disabled>
+				<i className="icon block"></i>
+				Paid plugins are not available in LuckyBox
 			</button>
 		);
 	}

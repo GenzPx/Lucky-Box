@@ -67,7 +67,7 @@ export default function AboutInclude() {
 						<div className="info-item-subtext">github.com/GenzPx</div>
 					</div>
 				</a>
-				<a href={config.GITHUB_URL} className="info-item">
+				<a href={config.UPSTREAM_URL} className="info-item">
 					<div className="info-item-icon">
 						<span className="icon github"></span>
 					</div>

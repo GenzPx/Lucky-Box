@@ -7,7 +7,6 @@ import TabView from "components/tabView";
 import tutorial from "components/tutorial";
 import prompt from "dialogs/prompt";
 import actionStack from "lib/actionStack";
-import auth from "lib/auth";
 import config from "lib/config";
 import installPlugin from "lib/installPlugin";
 import loadPlugin from "lib/loadPlugin";
@@ -202,9 +201,6 @@ export default function PluginsInclude(updates) {
 				<span id="all_plugins" onclick={renderAll} tabindex="0">
 					{strings.all}
 				</span>
-				<span id="owned_plugins" onclick={renderOwned} tabindex="0">
-					{strings.owned}
-				</span>
 			</div>
 			{$list.installed}
 		</TabView>
@@ -250,7 +246,6 @@ export default function PluginsInclude(updates) {
 	}
 	if (navigator.onLine) {
 		getAllPlugins();
-		getOwned();
 	}
 	getInstalledPlugins().then(() => {
 		if (plugins.installed.length) {
@@ -610,52 +605,6 @@ export default function PluginsInclude(updates) {
 			}),
 		);
 		$list.installed.setAttribute("empty-msg", strings["no plugins found"]);
-	}
-	async function getOwned() {
-		$list.owned.setAttribute("empty-msg", strings["loading..."]);
-		let iapPurchases = [];
-		if (helpers.isIapAvailable()) {
-			iapPurchases = await helpers.promisify(iap.getPurchases);
-			const disabledMap = settings.value.pluginsDisabled || {};
-			iapPurchases.forEach(async ({ productIds }) => {
-				const [sku] = productIds;
-				const url = Url.join(config.API_BASE, "plugin/owned", sku);
-				const plugin = await fsOperation(url).readFile("json");
-				plugins.owned.push(plugin);
-			});
-		} else if (!(await auth.getLoggedInUser())) {
-			console.log("Not logged in");
-			$list.owned.setAttribute("empty-msg", strings["login-to-view"]);
-			return;
-		}
-		try {
-			const res = await fetch(`${config.API_BASE}/plugins?owned=true`);
-			if (res.ok) {
-				const ownedPlugins = await res.json();
-				if (Array.isArray(ownedPlugins)) {
-					ownedPlugins.forEach((plugin) => {
-						if (
-							!iapPurchases.find(({ productIds }) =>
-								productIds.includes(plugin.sku),
-							)
-						) {
-							plugins.owned.push(plugin);
-						}
-					});
-				}
-			}
-		} catch (error) {}
-		for (const plugin of plugins.owned) {
-			plugin.installed = Boolean(
-				plugins.installed.find(({ id }) => id === plugin.id),
-			);
-			if (plugin.installed) {
-				plugin.enabled = disabledMap[plugin.id] !== true;
-				plugin.onToggleEnabled = onToggleEnabled;
-			}
-			$list.owned.append(<Item {...plugin} updates={updates} />);
-		}
-		$list.owned.setAttribute("empty-msg", strings["no plugins found"]);
 	}
 	function onInstall(plugin) {
 		if (updates) return;

@@ -1,34 +1,41 @@
 import settingsPage from "components/settingsPage";
 import config from "lib/config";
 export default function help() {
-	const title = strings.help;
 	const items = [
 		{
 			key: "docs",
 			text: strings.documentation,
+			info: "LuckyBox documentation in the repository",
+			icon: "description",
 			link: config.DOCS_URL,
 			chevron: true,
 		},
 		{
 			key: "help",
 			text: strings.help,
-			link: config.TELEGRAM_URL,
+			info: "Questions and community support",
+			icon: "help",
+			link: config.HELP_URL,
 			chevron: true,
 		},
 		{
 			key: "faqs",
 			text: strings.faqs,
-			link: `${config.BASE_URL}/faqs`,
+			info: "Frequently asked questions",
+			icon: "question_answer",
+			link: config.FAQ_URL,
 			chevron: true,
 		},
 		{
 			key: "bug_report",
 			text: strings.bug_report,
-			link: `${config.GITHUB_URL}/issues`,
+			info: "Open a structured bug report",
+			icon: "bug_report",
+			link: config.BUG_REPORT_URL,
 			chevron: true,
 		},
 	];
-	const page = settingsPage(title, items, () => {}, "separate", {
+	const page = settingsPage(strings.help, items, () => {}, "separate", {
 		preserveOrder: true,
 		pageClassName: "detail-settings-page",
 		listClassName: "detail-settings-list",

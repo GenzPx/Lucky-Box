@@ -1,0 +1,103 @@
+.git-commit-sidebar {
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+  }
+
+  .git-repository,
+  .git-branch {
+    padding: 0 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .git-repository {
+    font-weight: 600;
+  }
+
+  .git-branch {
+    padding-top: 4px;
+    padding-bottom: 10px;
+    color: var(--secondary-text-color);
+    font-size: 0.75rem;
+  }
+
+  .git-files {
+    min-height: 120px;
+    max-height: calc(100% - 220px);
+    padding: 0 8px;
+  }
+
+  .git-files[data-empty]::after {
+    content: "Working tree is clean.";
+    display: block;
+    padding: 28px 12px;
+    color: var(--secondary-text-color);
+    text-align: center;
+  }
+
+  .git-file {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    gap: 8px;
+    align-items: center;
+    min-height: 38px;
+    padding: 0 7px;
+    border-radius: 8px;
+
+    &:active {
+      background: rgb(127 127 127 / 12%);
+    }
+  }
+
+  .git-file-path {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .git-file-state {
+    color: var(--secondary-text-color);
+    font-size: 0.68rem;
+  }
+
+  .state-staged .git-file-state {
+    color: #2ca866;
+  }
+
+  .state-modified .git-file-state,
+  .state-untracked .git-file-state {
+    color: #f57c00;
+  }
+
+  .git-message {
+    box-sizing: border-box;
+    width: calc(100% - 20px);
+    min-height: 72px;
+    margin: 10px;
+    padding: 10px;
+    resize: vertical;
+    border: 1px solid rgb(127 127 127 / 24%);
+    border-radius: 10px;
+    outline: none;
+    background: rgb(127 127 127 / 8%);
+    color: var(--primary-text-color);
+    font: inherit;
+  }
+
+  .git-commit-button,
+  .git-init-button {
+    display: block;
+    margin: 10px;
+    padding: 10px 14px;
+    border: 0;
+    border-radius: 10px;
+    background: #f57c00;
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+  }
+}

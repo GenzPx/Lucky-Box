@@ -6,7 +6,6 @@ import alert from "dialogs/alert";
 import prompt from "dialogs/prompt";
 import select from "dialogs/select";
 import purchaseListener from "handlers/purchase";
-import auth from "lib/auth";
 import config from "lib/config";
 import InstallState from "lib/installState";
 import loadPlugin from "lib/loadPlugin";

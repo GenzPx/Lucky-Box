@@ -24,14 +24,12 @@ import Contextmenu from "components/contextmenu";
 import Sidebar from "components/sidebar";
 import tile from "components/tile";
 import toast from "components/toast";
-import confirm from "dialogs/confirm";
 import intentHandler, { processPendingIntents } from "handlers/intent";
 import keyboardHandler, { keydownState } from "handlers/keyboard";
 import quickToolsInit from "handlers/quickToolsInit";
 import windowResize from "handlers/windowResize";
 import acode from "lib/acode";
 import actionStack from "lib/actionStack";
-import adRewards from "lib/adRewards";
 import ajax from "lib/ajax";
 import applySettings from "lib/applySettings";
 import checkFiles from "lib/checkFiles";
@@ -49,21 +47,16 @@ import openFolder, { addedFolder } from "lib/openFolder";
 import { registerPrettierFormatter } from "lib/registerPrettierFormatter";
 import restoreFiles from "lib/restoreFiles";
 import settings from "lib/settings";
-import startAd, {
-	BANNER_SUPPRESSION_REASON,
-	setBannerSuppressed,
-} from "lib/startAd";
 import mustache from "mustache";
 import themes from "theme/list";
 import { initHighlighting } from "utils/codeHighlight";
 import { getEncoding, initEncodings } from "utils/encodings";
 import helpers from "utils/helpers";
-import { INSTALL_SOURCE_PLAY, isPlayStoreInstall } from "utils/installSource";
+import { INSTALL_SOURCE_PLAY } from "utils/installSource";
 import loadPolyFill from "utils/polyfill";
 import Url from "utils/Url";
 import $_fileMenu from "views/file-menu.hbs";
 import $_menu from "views/menu.hbs";
-import auth, { loginEvents } from "./lib/auth";
 
 const oldPreventDefault = TouchEvent.prototype.preventDefault;
 const previousVersionCode = Number.parseInt(localStorage.versionCode, 10);
@@ -82,7 +75,6 @@ TouchEvent.prototype.preventDefault = function () {
 	}
 };
 loadPolyFill.apply(window);
-loginEvents.addListener(onLogin);
 window.addEventListener("resize", windowResize);
 document.addEventListener("pause", pauseHandler);
 document.addEventListener("resume", resumeHandler);
@@ -162,7 +154,6 @@ async function onDeviceReady() {
 		return true;
 	})();
 	window.acode = acode;
-	await adRewards.init();
 	ensureAceCompatApi();
 	system.requestPermission("android.permission.READ_EXTERNAL_STORAGE");
 	system.requestPermission("android.permission.WRITE_EXTERNAL_STORAGE");
@@ -199,6 +190,15 @@ async function onDeviceReady() {
 	}, 1000 * 10);
 	acode.setLoadingMessage("Loading settings...");
 	await settings.init();
+	if (!localStorage.luckyCloverThemeInjected) {
+		if (["system", "dark"].includes(settings.value.appTheme)) {
+			await settings.update(
+				{ appTheme: "lucky clover", editorTheme: "githubDark" },
+				false,
+			);
+		}
+		localStorage.luckyCloverThemeInjected = "1";
+	}
 	themes.init();
 	initHighlighting();
 	fonts.injectFontFace("MesloLGS NF Regular");
@@ -242,84 +242,7 @@ async function onDeviceReady() {
 				toast("Failed to load plugins!");
 			}
 			applySettings.afterRender();
-			try {
-				const user = await auth.getLoggedInUser();
-				if (user) {
-					if (Boolean(user.acode_pro)) {
-						config.HAS_PRO = true;
-					}
-					loginEvents.emit();
-				}
-			} catch (error) {
-				console.error("Error checking login status:", error);
-			}
-			fetchPromotions();
-			startAd();
 		}, 500);
-	}
-	await promptUpdateCheckConsent();
-	if (
-		!isPlayStoreInstall() &&
-		settings.value.checkForAppUpdates &&
-		navigator.onLine
-	) {
-		cordova.plugin.http.sendRequest(
-			"https://api.github.com/repos/Acode-Foundation/Acode/releases/latest",
-			{
-				method: "GET",
-				responseType: "json",
-			},
-			(response) => {
-				const release = response.data;
-				const versionFormat = /^v?(\d+(?:\.\d+)*)/;
-				const latestVersion = release.tag_name
-					.match(versionFormat)?.[1]
-					.split(".")
-					.map(Number);
-				const currentVersion = BuildInfo.version
-					.match(versionFormat)?.[1]
-					.split(".")
-					.map(Number);
-				if (!(latestVersion && currentVersion)) {
-					window.log(
-						"error",
-						"Failed to parse version while checking for updates.",
-					);
-					return;
-				}
-				let hasUpdate = false;
-				for (let i = 0; i < latestVersion.length; i++) {
-					const latest = latestVersion[i];
-					const current = currentVersion[i] || 0;
-					if (latest > current) {
-						hasUpdate = true;
-						break;
-					} else if (latest < current) {
-						break;
-					}
-				}
-				if (hasUpdate) {
-					acode.pushNotification(
-						strings["update available"],
-						strings["update available info"].replace(
-							/\{version\}/,
-							release.tag_name,
-						),
-						{
-							icon: "update",
-							type: "warning",
-							action: () => {
-								system.openInBrowser(release.html_url);
-							},
-						},
-					);
-				}
-			},
-			(err) => {
-				window.log("error", "Failed to check for updates");
-				window.log("error", err);
-			},
-		);
 	}
 	const { default: checkPluginsUpdate } = await import(
 		"lib/checkPluginsUpdate"
@@ -341,33 +264,6 @@ async function onDeviceReady() {
 		})
 		.catch(console.error);
 }
-async function onLogin() {
-	try {
-		const user = await auth.getLoggedInUser();
-		if (!user) return;
-		if (Boolean(user.acode_pro)) {
-			config.HAS_PRO = true;
-		}
-		if (config.HAS_PRO) {
-			setBannerSuppressed(BANNER_SUPPRESSION_REASON.PRO, true);
-		}
-	} catch (error) {
-		console.error(error);
-	}
-}
-async function fetchPromotions() {
-	try {
-		const res = await fetch(`${config.API_BASE}/promotions`);
-		if (res.ok) {
-			const data = await res.json();
-			if (Array.isArray(data)) {
-				localStorage.setItem("cached_promotions", JSON.stringify(data));
-			}
-		}
-	} catch (err) {
-		console.debug("Failed to fetch promotions:", err);
-	}
-}
 async function setDebugInfo() {
 	const { version, versionCode } = BuildInfo;
 	const userAgent = navigator.userAgent;
@@ -377,7 +273,7 @@ async function setDebugInfo() {
 	const chromeMatch = userAgent.match(/Chrome\/([0-9.]+)/);
 	const webviewVersion = chromeMatch ? chromeMatch[1] : "Unknown";
 	const webviewMajor = Number.parseInt(webviewVersion, 10);
-	const minWebviewMajor = window.__ACODE_MIN_WEBVIEW_MAJOR__ || 84;
+	const minWebviewMajor = window.__LUCKYBOX_MIN_WEBVIEW_MAJOR__ || 84;
 	const webviewStatus =
 		Number.isFinite(webviewMajor) && webviewMajor < minWebviewMajor
 			? ` (minimum supported: ${minWebviewMajor})`
@@ -394,40 +290,6 @@ function getUpdateMessage(count) {
 	return count === 1
 		? strings["plugin updates singular"]
 		: strings["plugin updates plural"].replace(/\{count\}/, count);
-}
-async function promptUpdateCheckConsent() {
-	try {
-		if (isPlayStoreInstall()) {
-			localStorage.setItem("checkForUpdatesPrompted", "true");
-			if (settings.value.checkForAppUpdates) {
-				await settings.update(
-					{
-						checkForAppUpdates: false,
-					},
-					false,
-				);
-			}
-			return;
-		}
-		if (Boolean(localStorage.getItem("checkForUpdatesPrompted"))) return;
-		if (settings.value.checkForAppUpdates) {
-			localStorage.setItem("checkForUpdatesPrompted", "true");
-			return;
-		}
-		const message = strings["prompt update check consent message"];
-		const shouldEnable = await confirm(strings?.confirm, message);
-		localStorage.setItem("checkForUpdatesPrompted", "true");
-		if (shouldEnable) {
-			await settings.update(
-				{
-					checkForAppUpdates: true,
-				},
-				false,
-			);
-		}
-	} catch (error) {
-		console.error("Failed to prompt for update check consent", error);
-	}
 }
 async function loadApp() {
 	let $mainMenu;
@@ -449,7 +311,7 @@ async function loadApp() {
 	);
 	const $header = tile({
 		type: "header",
-		text: "Acode",
+		text: "LuckyBox",
 		lead: $navToggler,
 		tail: $menuToggler,
 	});
@@ -760,7 +622,6 @@ async function pauseHandler() {
 	acode?.exec("save-state");
 }
 function resumeHandler() {
-	adRewards.handleResume();
 	if (!settings.value.checkFiles) return;
 	checkFiles();
 }

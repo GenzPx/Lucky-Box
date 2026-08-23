@@ -1,5 +1,19 @@
 # LuckyBox Changelog
 
+## 1.13.2-luckybox.1
+
+- Added the Lucky Clover application theme and made it the branded default.
+- Redesigned Welcome with the yellow and forest-green visual system.
+- Replaced launcher, adaptive, About, Welcome, favicon, and splash artwork with the glossy four-leaf clover identity.
+- Added a yellow grow-and-shine splash transition.
+- Replaced Sign In with a local-only profile.
+- Replaced Notifications with the Activity operation panel.
+- Added built-in Git Commit, Archive Tools, Checksum Tools, and Project Insights foundations.
+- Redirected help, documentation, FAQ, and bug reporting to the LuckyBox repository.
+- Removed the obsolete application update checker and upstream promotions.
+- Updated creator social links from the GenzPx profile.
+- Rebuilt the legacy console with a readable dark interface.
+
 ## 1.13.1-luckybox.1
 
 ### Foundation

@@ -1,7 +1,7 @@
 {
   "name": "id.luckybox.server",
   "displayName": "LuckyBox",
-  "version": "1.13.1",
+  "version": "1.13.2",
   "description": "LuckyBox is a fast, minimal code editor and web IDE for Android.",
   "scripts": {
     "lang": "node ./utils/lang.js",
@@ -45,7 +45,6 @@
       "cordova-plugin-browser": {},
       "cordova-plugin-sftp": {},
       "com.foxdebug.acode.rk.plugin.plugincontext": {},
-      "com.foxdebug.acode.rk.auth": {},
       "com.foxdebug.acode.rk.customtabs": {},
       "cordova-plugin-system": {},
       "cordova-plugin-crashhandler": {},
@@ -86,7 +85,6 @@
     "autoprefixer": "^10.5.0",
     "babel-loader": "^10.1.1",
     "chokidar": "^4.0.3",
-    "com.foxdebug.acode.rk.auth": "file:src/plugins/auth",
     "com.foxdebug.acode.rk.customtabs": "file:src/plugins/custom-tabs",
     "com.foxdebug.acode.rk.plugin.plugincontext": "file:src/plugins/pluginContext",
     "cordova-android": "^15.1.0",
@@ -180,6 +178,7 @@
     "esprima": "^4.0.1",
     "filesize": "^11.0.17",
     "html-tag-js": "^2.4.16",
+    "isomorphic-git": "^1.41.8",
     "jszip": "^3.10.1",
     "katex": "^0.16.45",
     "markdown-it": "^14.2.0",

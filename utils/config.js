@@ -37,7 +37,7 @@ function configureProject({
 	fs.mkdirSync(path.dirname(colorPath), { recursive: true });
 	fs.writeFileSync(
 		colorPath,
-		'<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#0B0B0B</color>\n    <color name="ic_splash_background">#0B0B0B</color>\n</resources>\n',
+		'<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#FFC400</color>\n    <color name="ic_splash_background">#FFC400</color>\n</resources>\n',
 		"utf8",
 	);
 

@@ -3,6 +3,32 @@ import { createBuiltInTheme } from "./builder";
 import { apply } from "./list";
 
 const WHITE = "rgb(255, 255, 255)";
+const luckyClover = createBuiltInTheme("Lucky Clover", "dark", "free");
+luckyClover.primaryColor = "rgb(16, 37, 26)";
+luckyClover.primaryTextColor = "rgb(255, 247, 209)";
+luckyClover.secondaryColor = "rgb(23, 51, 34)";
+luckyClover.secondaryTextColor = "rgb(234, 244, 232)";
+luckyClover.activeColor = "rgb(255, 196, 0)";
+luckyClover.activeIconColor = "rgba(255, 196, 0, 0.22)";
+luckyClover.linkTextColor = "rgb(98, 214, 139)";
+luckyClover.borderColor = "rgba(255, 196, 0, 0.22)";
+luckyClover.popupIconColor = "rgb(255, 247, 209)";
+luckyClover.popupBackgroundColor = "rgb(25, 59, 41)";
+luckyClover.popupTextColor = "rgb(245, 250, 239)";
+luckyClover.popupActiveColor = "rgb(255, 196, 0)";
+luckyClover.popupBorderColor = "rgba(255, 196, 0, 0.24)";
+luckyClover.popupBorderRadius = "12px";
+luckyClover.buttonBackgroundColor = "rgb(255, 196, 0)";
+luckyClover.buttonTextColor = "rgb(18, 54, 34)";
+luckyClover.buttonActiveColor = "rgb(231, 174, 0)";
+luckyClover.boxShadowColor = "rgba(3, 15, 9, 0.48)";
+luckyClover.activeTextColor = "rgb(18, 54, 34)";
+luckyClover.errorTextColor = "rgb(255, 173, 115)";
+luckyClover.successTextColor = "rgb(88, 214, 141)";
+luckyClover.dangerColor = "rgb(255, 107, 95)";
+luckyClover.scrollbarColor = "rgba(255, 196, 0, 0.22)";
+luckyClover.preferredEditorTheme = "githubDark";
+luckyClover.preferredFont = "Fira Code";
 const dark = createBuiltInTheme("Dark", "dark", "free");
 dark.primaryColor = "rgb(35, 39, 42)";
 dark.primaryTextColor = "rgb(245, 245, 245)";
@@ -520,6 +546,7 @@ blossom.preferredTerminalTheme = "light";
 const custom = createBuiltInTheme("Custom");
 custom.autoDarkened = true;
 export default [
+	luckyClover,
 	system,
 	createBuiltInTheme("Legacy", "dark", "free"),
 	dark,

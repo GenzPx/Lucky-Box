@@ -7,7 +7,7 @@ const modules = Object.freeze([
 	module("editor", "Code Editor", "ACTIVE", "text_format"),
 	module("workspace", "Smart Workspace", "PLANNED", "dashboard"),
 	module("files", "Project Explorer", "ACTIVE", "folder_open"),
-	module("archive", "Archive Manager", "FOUNDATION", "archive"),
+	module("archive", "Archive Manager", "FOUNDATION", "zip"),
 	module("devtools", "Browser DevTools", "FOUNDATION", "public"),
 	module("elements", "Elements & Live Edit", "PLANNED", "code"),
 	module("network", "Network Inspector", "FOUNDATION", "swap_horiz"),
@@ -21,12 +21,18 @@ const modules = Object.freeze([
 		"accessibility",
 	),
 	module("time-machine", "Time Machine", "PLANNED", "historyrestore"),
-	module("git", "Git", "PLANNED", "account_tree"),
+	module("git", "Git Commit", "ACTIVE", "git"),
 	module("plugins", "Plugins & Permissions", "ACTIVE", "extension"),
 	module("viewers", "Built-in Viewers", "PLANNED", "visibility"),
-	module("operations", "Operation Queue", "FOUNDATION", "sync"),
+	module("operations", "Operation Queue", "ACTIVE", "cached"),
 	module("toolbar", "Custom Mobile Toolbar", "ACTIVE", "build"),
-	module("checksum", "Checksums & Metadata", "FOUNDATION", "verified_user"),
+	module("checksum", "Checksums & Metadata", "FOUNDATION", "verified"),
+	module(
+		"project-insights",
+		"Project Insights",
+		"FOUNDATION",
+		"insert_chartpollassessment",
+	),
 ]);
 export function listModules({ status } = {}) {
 	return modules.filter((entry) => !status || entry.status === status);
@@ -44,6 +50,10 @@ export async function loadModule(id) {
 			return await import("./checksum/checksum");
 		case "network":
 			return await import("../devtools/network/NetworkSession");
+		case "git":
+			return await import("./gitCommit");
+		case "project-insights":
+			return await import("./projectInsights");
 		default:
 			throw new Error(`Module '${id}' does not expose a lazy entry point yet`);
 	}
